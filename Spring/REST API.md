@@ -41,12 +41,11 @@ REST API란 REST의 원리를 따르는 API이다.
 > 1. URL Rules
 > 2. HTTP 헤더
 > 3. 리소스 간의 관계 표현
-> 4. 자원을 표현하는 Collection과 Document 
-> 5. PATCH 사용
-> 6. HTTP status
-> 7. HATEOAS 사용
-> 8. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용
-> 9. API 버전 관리
+> 4. PATCH 사용
+> 5. HTTP status
+> 6. HATEOAS 사용
+> 7. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용
+> 8. API 버전 관리
 
 ## 1. URL Rules
 **1-1. URI에 명사를 사용한다.**
