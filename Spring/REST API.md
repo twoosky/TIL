@@ -38,11 +38,21 @@
 ## REST API
 REST API란 REST의 원리를 따르는 API이다.  
 아래는 REST API 설계규칙이다.
-### 1. URL Rules
+> 1. URL Rules
+> 2. HTTP 헤더
+> 3. 리소스 간의 관계 표현
+> 4. 자원을 표현하는 Collection과 Document 
+> 5. PATCH 사용
+> 6. HTTP status
+> 7. HATEOAS 사용
+> 8. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용
+> 9. API 버전 관리
+
+## 1. URL Rules
 **1-1. URI에 명사를 사용한다.**
 ```
-[Bad Example] http://api.test.com/Run/
-[Good Example]  http://api.test.com/running/  
+[Bad Example] http://api.test.com/running/
+[Good Example]  http://api.test.com/run/  
 ```
 **1-2. 마지막에 슬래시(/)를 포함하지 않는다.**
 ```
@@ -69,7 +79,7 @@ REST API란 REST의 원리를 따르는 API이다.
 **1-6. 소문자를 사용한다.**  
 대소문자에 따라 다른 리소스로 인식하기 때문에 소문자로 일관성 유지
 
-### 2. HTTP헤더
+## 2. HTTP 헤더
 **2-1. Content-Location**  
 post 요청의 대부분은 응답 리소스의 결과가 항상 동일하지 않다.    
 ``` JSON
@@ -96,14 +106,13 @@ HATEOAS로 `content-Location`을 대체할 수 있다.
 * Accept: 클라이언트/서버가 선호하는 미디어 타입 명시
 ```
 
-### 3. 리소스 간의 관계 표현  
-리소스 간의 연관 관계는 아래와 같이 표현한다.
+## 3. 리소스 간의 관계 표현  
+**3-1. 리소스 간의 연관 관계 표현**  
 ```
 /리소스명/리소스ID/관계가 있는 다른 리소스명
 GET /users/{userId}/articles
 ```
-
-### 4. 자원을 표현하는 Collection과 Document  
+**3-2 리소스를 표현하는 Collection과 Document**  
 * `Collection`: 문서들의 집합, 객체들의 집합   
 * `Document`: 문서, 하나의 객체  
 **Collection은 복수**, **Document는 단수**로 표현.
@@ -114,7 +123,7 @@ http://api.test.com/sports/soccer
 ex2) sports, players 컬렉션과 soccer, 13(13번인 선수)를 의미하는 도큐먼트로 URI가 이루어짐.
 http://api.test.com/sports/soccer/players/13
 ```
-### 5. PATCH 사용
+## 4. PATCH 사용
 PUT 대신 PATCH를 사용해 REST API 완성도를 높인다.  
 자원의 일부를 수정할 때는 `PATCH`를 사용하자.
 
@@ -146,7 +155,7 @@ PATCH를 사용하면 원래의 목적대로 `level`만 변경하는 요청을 �
 }
 ```
 
-### 6. HTTP status
+## 5. HTTP status
 의미에 맞는 HTTP status를 리턴한다.
 ```json
 "[Bad]"
@@ -163,10 +172,10 @@ PATCH를 사용하면 원래의 목적대로 `level`만 변경하는 요청을 �
 }
 ```
 
-### 7. HATEOAS 사용
+## 6. HATEOAS 사용
 HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 link들을 함께 제공하는 것이다.  
 
-**7-1HATEOAS 구성 요소**
+**6-1. HATEOAS 구성 요소**
 * `rel`: 변경될 리소스의 상태 관계
   * `self`: 현재 URL 자신, 예약어처럼 쓰임
 * `href`: 요청 URL
@@ -178,7 +187,7 @@ HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 l
     "method": "GET"
 }
 ```
-**7-2 응답 예제**
+**6-2. 응답 예제**
 ```json
 201 "Created"
 {
@@ -217,7 +226,7 @@ HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 l
 * `more_info`, `body`와 같이 내부 정의된 key를 사용해도 된다.
 * 즉, hateoas에 명시된 값은 사용자가 직접 정의해 사용할 수 있다.
 
-### 8. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용**
+## 7. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용
 서버에 대한 요청은 하나의 데이터셋으로 처리되는 단순한 쿼리로 진행해야한다.  
 예를 들어 GET 메소드 API로 검색, 정렬, 필터링, 페이징등의 쿼리 매개변수 추가는 다음의 예처럼 처리 권장
 |상태 코드|설명|예|
@@ -227,13 +236,11 @@ HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 l
 |Searching|데이터 검색 시|GET /companies?search=Digital|
 |Pagination|페이징 처리 시|GET /companies?page=23|
 
-### 9. API 버전 관리
+## 8. API 버전 관리
 * API 버전 관리를 반드시 필수로 하고, 버전이 다른 API는 릴리즈 하지 말 것
 * 간단한 서수를 표현하고 2.5등과 같은 점 표기법은 사용하지 말 것
 * 일반적으로 버전은 'v' + 숫자로 표기 
 * ex) `/api/v1/board/`
-
-
 
 ## RESTful이란
 * RESTful이란 REST의 원리를 따르는 시스템을 의미한다.  
