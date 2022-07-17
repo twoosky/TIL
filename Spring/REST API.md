@@ -10,10 +10,11 @@
 3. 해당 자원(URI)에 대한 CRUD Operation을 적용하는 것을 의미한다.
 
 ## REST 구성 요소
-* 자원(Resource): URI
-* 행위(Verb): HTTP Method
-* 표현(Representations): HTTP Message Pay Load
-  * JSON 또는 XML을 통해 데이터 주고 받음
+|구성 요소|내용|표현 방법|예
+|---|---|---|---|
+|자원(Resource)|자원|HTTP URI|/members/{1}, /member/|
+|행위(Verb)|자원에 대한 행위|HTTP Method|POST, GET, DELETE, PUT|
+|표현(Representations)|자원에 대한 행위의 내용 (즉, 요청에 대한 Body)|HTTP Message Payload (JSON, XML, TEXT, RSS 등)|{  member-id:”82370”,  member-name:”홍길동“,  member-org:”10100”,  member-location:”11010” }|
 
 ## REST 특징
 **1. Server-Client: 서버 클라이언트 구조**
@@ -32,42 +33,211 @@
 > REST API 메시지만 보고도 쉽게 이해할 수 있는 자체 표현 구조로 구성되어 있다.
 
 **6. Uniform Interface: 인터페이스 일관성**
-> URI로 지정한 Resource에 대한 조작을 통일되고 한정적인 인터페이스로 수행한다.
+> URI로 지정한 Resource에 대한 조작을 통일되고 한정적인 인터페이스로 수행하는 아키텍처 스타일.
 
 ## REST API
 REST API란 REST의 원리를 따르는 API이다.  
 아래는 REST API 설계규칙이다.
+### 1. URL Rules
+**1-1. URI에 명사를 사용한다.**
+```
+[Bad Example] http://api.test.com/Run/
+[Good Example]  http://api.test.com/running/  
+```
+**1-2. 마지막에 슬래시(/)를 포함하지 않는다.**
+```
+[Bad Example] http://api.test.com/test/  
+[Good Example]  http://api.test.com/test
+```
+**1-3. 언더바 대신 하이폰을 사용한다.**
+```
+[Bad Example] http://api.test.com/article_comments
+[Good Example]  http://api.test.com/article-comments
+```
+**1-4. 파일확장자는 URI에 포함하지 않는다.**
+```
+[Bad Example] http://api.test.com/photo.jpg  
+[Good Example]  http://api.test.com/photo  
+```
+**1-5. URI에 행위를 포함하지 않는다.**
+```
+[Bad Example] POST http://api.test.com/members/delete-article/1  
+[Good Example] DELETE http://api.test.com/members/article/1  
+```
+자원에 대한 행위는 HTTP Method(GET, POST, PUT, DELETE 등)로 표현  
 
-**1. URI는 동사보다는 명사를, 대문자보다는 소문자를 사용하여야 한다.**
+**1-6. 소문자를 사용한다.**  
+대소문자에 따라 다른 리소스로 인식하기 때문에 소문자로 일관성 유지
+
+### 2. HTTP헤더
+**2-1. Content-Location**  
+post 요청의 대부분은 응답 리소스의 결과가 항상 동일하지 않다.    
+``` JSON
+POST /users
+{
+    "name": "hak"
+}
 ```
-[Bad Example] http://twoosky.com/Running/
-[Good Example]  http://twoosky.com/run/  
+위와 같은 요청은 매번 다른 리소스를 반환한다.  
+첫번째는 `/user/1`, 두번째는 `/user/2` ... n번째는 `/user/n`  
+*따라서 요청의 응답 헤더에 새로 생성된 리소스를 식별할 수 있는 `Content-Location` 속성을 명시해야 한다.*
+
+``` HTTP
+HTTP/1.1 200 OK
+Content-Location: /users/1
 ```
-**2. 마지막에 슬래시(/)를 포함하지 않는다.**
+HATEOAS로 `content-Location`을 대체할 수 있다.
+
+**2-2. Content-Type, Accept**   
+클라이언트와 서버 모두 통신을 위해 어떤 포맷이 사용되었는지 파악하기 파악하기 위해 데이터 포맷을 HTTP Header에 명시해야 한다.  
 ```
-[Bad Example] http://twoosky.com/test/  
-[Good Example]  http://twoosky.com/test
+* Content-Type: 응답의 형식(json, xml 등)을 명시 
+  * ex)application/json
+* Accept: 클라이언트/서버가 선호하는 미디어 타입 명시
 ```
-**3. 언더바 대신 하이폰을 사용한다.**
+
+### 3. 리소스 간의 관계 표현  
+리소스 간의 연관 관계는 아래와 같이 표현한다.
 ```
-[Bad Example] http://twoosky.com/test-
-[Good Example]  http://twoosky.com/test-blog  
+/리소스명/리소스ID/관계가 있는 다른 리소스명
+GET /users/{userId}/articles
 ```
-**4. 파일확장자는 URI에 포함하지 않는다.**
+
+### 4. 자원을 표현하는 Collection과 Document  
+* `Collection`: 문서들의 집합, 객체들의 집합   
+* `Document`: 문서, 하나의 객체  
+**Collection은 복수**, **Document는 단수**로 표현.
 ```
-[Bad Example] http://twoosky.com/photo.jpg  
-[Good Example]  http://twoosky.com/photo  
+ex1) sports라는 컬렉션과 soccer라는 도큐먼트로 표현
+http://api.test.com/sports/soccer
+
+ex2) sports, players 컬렉션과 soccer, 13(13번인 선수)를 의미하는 도큐먼트로 URI가 이루어짐.
+http://api.test.com/sports/soccer/players/13
 ```
-**5. 행위를 포함하지 않는다.**
+### 5. PATCH 사용
+PUT 대신 PATCH를 사용해 REST API 완성도를 높인다.  
+자원의 일부를 수정할 때는 `PATCH`를 사용하자.
+
+PUT 요청 시 요청을 일부분만 보낸 경우 나머지는 default 값으로 수정된다.  
+따라서 PUT은 다음과 같이 바뀌지 않는 속성도 보내야 한다.  
+ex) `level`만 변경하고 싶은 경우
 ```
-[Bad Example] http://twoosky.com/members/delete-article/1  
-[Good Example]  http://twoosky.com/members/article/1  
+요청
+PUT /users/1
+{
+    "name": "hak"
+    "level": 11
+}
+응답
+HTTP/1.1 200 OK
+{
+    "name": "hak",
+    "level": 11
+}
 ```
-자원에 대한 행위는 HTTP Method(GET, POST, PUT, DELETE 등)로 표현
+PATCH를 사용하면 원래의 목적대로 `level`만 변경하는 요청을 보낸다.
 ```
-[Bad Example] GET members/delete-article/1  
-[Good Example] DELETE members/article/1  
+요청
+PATCH /users/1
+{
+    "level": 11
+}
+응답
+HTTP/1.1 200 OK
+{
+    "name": "hak",
+    "level": 11
+}
 ```
+
+### 6. HTTP status
+의미에 맞는 HTTP status를 리턴한다.
+```
+[Bad]
+HTTP/1.1 200 OK
+{
+    "result" : false
+    "status" : 400
+}
+
+[Good]
+HTTP/1.1 400 Bad Request
+{
+    "msg" : "check your parameter"
+}
+```
+
+## 7. HATEOAS 사용
+HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 link들을 함께 제공하는 것이다.  
+
+**7-1HATEOAS 구성 요소**
+* `rel`: 변경될 리소스의 상태 관계
+  * `self`: 현재 URL 자신, 예약어처럼 쓰임
+* `href`: 요청 URL
+* `method`: 요청 Method
+```json
+{
+    "rel": "self",
+    "href": "http://api.test.com/users/1",
+    "method": "GET"
+}
+```
+**7-2 응답 예제**
+```json
+201 Created
+{
+    "id": 1,
+    "name": "hak",
+    "createdAt": "2018-07-04 14:00:00"
+    "links": [
+        {
+            "rel": "self",
+            "href": "http://api.test.com/users/1",
+            "method": "GET"
+        },
+        {
+            "rel": "delete",
+            "href": "http://api.test.com/users/1",
+            "method": "DELETE"
+        },
+        {
+            "rel": "update",
+            "href": "http://api.test.com/users/1",
+            "method": "PATCH",
+            "more_info": "http://api.test.com/docs/user-update"
+            "body": {
+                "name": "{The value to be modified}"
+            }
+        },
+        {
+            "rel": "user.posts",
+            "href": "http://api.test.com/users/1/posts",
+            "method": "GET"
+        }
+    ]
+}
+```
+* `rel`값은 `self`를 제외하고 내부 규칙을 정해 따른다. 의미만 명확히 드러나면 된다.
+* `more_info`, `body`와 같이 내부 정의된 key를 사용해도 된다.
+* 즉, hateoas에 명시된 값은 사용자가 직접 정의해 사용할 수 있다.
+
+### 8. 검색, 정렬, 필터링 그리고 페이징을 위한 규칙 사용**
+서버에 대한 요청은 하나의 데이터셋으로 처리되는 단순한 쿼리로 진행해야한다.  
+예를 들어 GET 메소드 API로 검색, 정렬, 필터링, 페이징등의 쿼리 매개변수 추가는 다음의 예처럼 처리 권장
+|상태 코드|설명|예|
+|---|---|---|
+|Sorting|리스트를 클라이언트의 요청에 맞게 정렬 시|GET /companies?sort=rank_asc|
+|Filtering|데이터셋의 데이터를 필터링 할 때, 다양한 쿼리 파라미터를 통해 필터링 처리 가능|GET /companies?category=banking&location=india (회사의 카테고리를 은행으로 정하고 은행이 위치한 장소를 인도로 필터 처리)|
+|Searching|데이터 검색 시|GET /companies?search=Digital|
+|Pagination|페이징 처리 시|GET /companies?page=23|
+
+### 9. API 버전 관리
+* API 버전 관리를 반드시 필수로 하고, 버전이 다른 API는 릴리즈 하지 말 것
+* 간단한 서수를 표현하고 2.5등과 같은 점 표기법은 사용하지 말 것
+* 일반적으로 버전은 'v' + 숫자로 표기 
+* ex) `/api/v1/board/`
+
+
 
 ## RESTful이란
 * RESTful이란 REST의 원리를 따르는 시스템을 의미한다.  
