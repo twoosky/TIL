@@ -73,7 +73,7 @@ REST API란 REST의 원리를 따르는 API이다.
 **2-1. Content-Location**  
 post 요청의 대부분은 응답 리소스의 결과가 항상 동일하지 않다.    
 ``` JSON
-POST /users
+"POST /users"
 {
     "name": "hak"
 }
@@ -83,7 +83,7 @@ POST /users
 *따라서 요청의 응답 헤더에 새로 생성된 리소스를 식별할 수 있는 `Content-Location` 속성을 명시해야 한다.*
 
 ``` HTTP
-HTTP/1.1 200 OK
+"HTTP/1.1 200 OK"
 Content-Location: /users/1
 ```
 HATEOAS로 `content-Location`을 대체할 수 있다.
@@ -121,29 +121,25 @@ PUT 대신 PATCH를 사용해 REST API 완성도를 높인다.
 PUT 요청 시 요청을 일부분만 보낸 경우 나머지는 default 값으로 수정된다.  
 따라서 PUT은 다음과 같이 바뀌지 않는 속성도 보내야 한다.  
 ex) `level`만 변경하고 싶은 경우
-```
-요청
-PUT /users/1
+```json
+"PUT /users/1"
 {
     "name": "hak"
     "level": 11
 }
-응답
-HTTP/1.1 200 OK
+"HTTP/1.1 200 OK"
 {
     "name": "hak",
     "level": 11
 }
 ```
 PATCH를 사용하면 원래의 목적대로 `level`만 변경하는 요청을 보낸다.
-```
-요청
-PATCH /users/1
+```json
+"PATCH /users/1"
 {
     "level": 11
 }
-응답
-HTTP/1.1 200 OK
+"HTTP/1.1 200 OK"
 {
     "name": "hak",
     "level": 11
@@ -152,16 +148,16 @@ HTTP/1.1 200 OK
 
 ### 6. HTTP status
 의미에 맞는 HTTP status를 리턴한다.
-```
-[Bad]
-HTTP/1.1 200 OK
+```json
+"[Bad]"
+"HTTP/1.1 200 OK"
 {
     "result" : false
     "status" : 400
 }
 
-[Good]
-HTTP/1.1 400 Bad Request
+"[Good]"
+"HTTP/1.1 400 Bad Request"
 {
     "msg" : "check your parameter"
 }
@@ -184,7 +180,7 @@ HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 l
 ```
 **7-2 응답 예제**
 ```json
-201 Created
+201 "Created"
 {
     "id": 1,
     "name": "hak",
