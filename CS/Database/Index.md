@@ -1,4 +1,8 @@
 # Index
+* [Index란](#Index란)
+* [Index SQL](#Index-SQL)
+* [Index 자료구조](#Index-자료구조)
+* [Index 고려사항](#Index-고려사항)
 
 # Index란
 `Index`는 테이블에 대한 동작 속도를 높여주는 자료구조이다.    
@@ -77,10 +81,7 @@ create unique index user_address_index on user(address);
 Error: UNIQUE constraint failed: user.address
 ```
 
-# 성능 테스트
-
-
-# Index 자료 구조
+# Index 자료구조
 DB Index에 적합한 자료 구조로는 크게 `Hash Table`, `B-Tree`, `B+Tree` 등이 있다.  
 
 ## 1. Hash Table
