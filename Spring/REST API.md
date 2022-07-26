@@ -4,19 +4,19 @@
 * [REST 특징](#REST-특징)
 * [REST API](#REST-API)
 * [RESTful이란](#RESTful이란)
-## REST란
+# REST란
 1. HTTP URI(Uniform Resource Identifier)를 통해 자원(Resource)을 명시하고,
 2. HTTP Method(POST, GET, PUT, DELETE)를 통해
 3. 해당 자원(URI)에 대한 CRUD Operation을 적용하는 것을 의미한다.
 
-## REST 구성 요소
+# REST 구성 요소
 |구성 요소|내용|표현 방법|예
 |---|---|---|---|
 |자원(Resource)|자원|HTTP URI|/members/{1}, /member/|
 |행위(Verb)|자원에 대한 행위|HTTP Method|POST, GET, DELETE, PUT|
 |표현(Representations)|자원에 대한 행위의 내용 (즉, 요청에 대한 Body)|HTTP Message Payload (JSON, XML, TEXT, RSS 등)|{  member-id:”82370”,  member-name:”홍길동“,  member-org:”10100”,  member-location:”11010” }|
 
-## REST 특징
+# REST 특징
 **1. Server-Client: 서버 클라이언트 구조**
 >  REST 서버는 API 제공, 클라이언트는 사용자 인증이나 컨텍스트(세션, 로그인 정보)등을 관리하는 구조로 각각의 역할이 확실히 구분된다. 따라서 클라이언트와 서버에서 개발해야 할 내용이 명확해지고, 서로간 의존성이 줄어들게 된다.
 
@@ -35,7 +35,7 @@
 **6. Uniform Interface: 인터페이스 일관성**
 > URI로 지정한 Resource에 대한 조작을 통일되고 한정적인 인터페이스로 수행하는 아키텍처 스타일.
 
-## REST API
+# REST API
 REST API란 REST의 원리를 따르는 API이다.  
 아래는 REST API 설계규칙이다.
 > 1. URL Rules
@@ -241,7 +241,7 @@ HATEOAS란 응답 객체에 해당 리소스의 상태가 전이될 수 있는 l
 * 일반적으로 버전은 'v' + 숫자로 표기 
 * ex) `/api/v1/board/`
 
-## RESTful이란
+# RESTful이란
 * RESTful이란 REST의 원리를 따르는 시스템을 의미한다.  
 * 하지만 REST를 사용했다 하여 모두가 RESTful한 것은 아니다. REST API 설계 규칙을 올바르게 지킨 시스템을 RESTful하다고 할 수 있다.  
 * 부적절한 HTTP Method를 사용한 API(모든 CRUD 기능을 POST로 처리 등), URI 규칙을 올바르게 지치지 않은 API 등 REST API 설계 규칙을 올바르게 지키지 못한 시스템은 REST API를 사용했지만, RESTful하지 못한 시스템이라고 할 수 있다.  
