@@ -102,7 +102,12 @@ Async는 결과를 바로 처리하지 않는 것이다.
 
 
 
+
+
 ||Blocking|Non-Blocking|
 |---|---|---|
 |Sync|Blocking/Sync|Non-Blocking/Sync|
 |Async|Blocking/Async|Non-Blocking/ASync|
+
+---
+reference: https://youtu.be/oEIoqGd-Sns
