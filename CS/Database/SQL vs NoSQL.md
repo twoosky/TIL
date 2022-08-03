@@ -1,7 +1,7 @@
 # SQL vs NoSQL
-* [SQL: 관계형 데이터베이스](#SQL:-관계형-데이터베이스)
-* [NoSQL: 비관계형 데이터베이스](#NoSQL:-비관게형-데이터베이스)
-* [수직적(Vertical) & 수평적(Horizontal) 확장](#수직적(Vertical)-&-수평적(Horizontal)-확장)
+* [SQL: 관계형 데이터베이스](#sql-관계형-데이터베이스)
+* [NoSQL: 비관계형 데이터베이스](#nosql-비관계형-데이터베이스)
+* [수직적(Vertical) & 수평적(Horizontal) 확장](#수직적vertical--수평적horizontal-확장)
 * [정리](#정리)
 
 # SQL: 관계형 데이터베이스
