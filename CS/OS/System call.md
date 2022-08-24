@@ -1,6 +1,8 @@
 # System call
 * `System call`은 사용자나 응용 프로그램이 커널에서 제공하는 기능을 사용하기 위한 인터페이스이다.
 * 운영체제는 커널이 제공하는 서비스를 System call을 통해 제한함으로써 컴퓨터 자원을 보호한다.
+* `kernel mode`: System call을 수행하는 모드, I/O 장치를 포함해 모든 주소 영역에 접근이 가능하다.
+* `user mode`: 응용프로그램이 수행되는 모드, 컴퓨터 자원에 접근할 수 없다.
 
 ### System call 수행 과정
 <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FALlGh%2FbtquL0XgOow%2FqaDksq1AsUKrpZKEzSu0DK%2Fimg.png" width="220" height="250">
