@@ -126,12 +126,19 @@ List<MemberDTO> resultList = em.createQuery(jpql, MemberDTO.class);
 * setMaxResults(int maxResult): 조회할 데이터 수
 ```java
 //페이징 쿼리
-String jpql = "select m from Member m order by m.name desc";
+String jpql = "select m from Member m order by m.age desc";
 List<Member> resultList = em.createQuery(jpql, Member.class)
-      .setFirstResult(10)
-      .setMaxResults(20)
+      .setFirstResult(1)  // 조회할 페이지
+      .setMaxResults(10)  // 페이지 내 데이터 수
       .getResultList();
 ```
+
+## 4. 조인
+* 내부 조인: `SELECT m FROM Member m INNER JOIN m.team t`
+* 외부 조인: `SELECT m FROM Member m LEFT OUTER JOIN m.team t`
+* 세타 조인: `SELECT count(m) FROM Member m, Team t WHERE m.name = t.name`
+  * 연관관계가 없는 테이블 join
+ 
               
 
 
