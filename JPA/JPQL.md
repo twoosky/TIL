@@ -138,16 +138,56 @@ List<Member> resultList = em.createQuery(jpql, Member.class)
 * 외부 조인: `SELECT m FROM Member m LEFT OUTER JOIN m.team t`
 * 세타 조인: `SELECT count(m) FROM Member m, Team t WHERE m.name = t.name`
   * 연관관계가 없는 테이블 join
- 
-              
 
+**조인 - ON 절** (JPA 2.1부터 지원)
+1. 조인 대상 필터링
+```
+SELECT m FROM MEmber m LEFT JOIN m.team t ON t.name = 'a'
+```
+3. 연관관계 없는 엔티티 외부 조인 (하이버네이트 5.1부터) 
+```
+SELECT m, t FROM Member m LEFT JOIN Team t on m.name = t.name
+```
 
+## 5. 서브 쿼리
+* 쿼리 내에서 또 다른 쿼리를 생성하는 것
+* JPA는 `WHERE`, `HAVING` 절에서만 서브 쿼리 지원
+* Hibernate에서는 `SELECT`절 서브 쿼리까지 지원
+* FROM 절은 서브 쿼리 미지원 (JOIN 으로 풀어 해결하자)
+  * Application에서 조립, 쿼리 2개로 풀어 사용 등
 
+**jpql 서브 쿼리 예시**
+1. 나이가 평균보다 많은 회원
+```
+SELECT m FROM Member m
+WHERE m.age > (SELECT avg(m2.age) FROM Member m2)
+```
+2. 한 건이라도 주문한 고객
+```
+SELECT m FROM Member m
+WHERE (SELECT count(o) FROM Order o WHERE m = o.member) > 0
+```
 
-
-
-
-
+**서브 쿼리 지원 함수**
+1. [NOT] EXISTS (subquery): 서브 쿼리에 결과가 존재하면 참
+```sql
+<!-- 팀 A 소속인 회원 존재 여부 -->
+select m from Member m
+where exists (select t from m.team t where t.name = 'A')
+```
+2. ALL (subquery): 모두 만족하면 참
+```sql
+<!-- 전체 상품 각각의 재고보다 주문량이 많은 주문들 -->
+select o from Order o
+where o.orderAmount > ALL (select p.stockAmount from Product p)
+```
+3. {ANY | SOME} (subquery): 조건을 하나라도 만족하면 참
+```sql
+<!-- 어떤 팀이든 팀에 소속된 회원 -->
+select m from Member m
+where m.team = ANY (select t from Team t)
+```
+4. [NOT] IN (subquery): 서브쿼리의 결과 중 하나라도 같은 것이 있으면 참
 
 
 
