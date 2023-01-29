@@ -30,7 +30,7 @@
 * JPQL 키워드는 대소문자를 구분하지 않아도 된다. (SELECT, FROM, where ..)
 * 엔티티 이름을 사용한다. 테이블 이름 아님
 * 별칭은 필수 (as는 생략 가능)
-```sql
+```
 select m from Member as m where m.age > 18
 ```
 ```
@@ -47,7 +47,7 @@ delete_문 :: = delete_절 [where_절]
 ```
 **집합과 정렬**
 * GROUP BY, HAVING, ORDER BY .. 다 똑같이 사용
-```sql
+```java
 select
 COUNT(m),
     SUM(m.age),  // 회원 수
@@ -158,37 +158,94 @@ SELECT m, t FROM Member m LEFT JOIN Team t on m.name = t.name
 
 **jpql 서브 쿼리 예시**
 1. 나이가 평균보다 많은 회원
-```
+```java
 SELECT m FROM Member m
 WHERE m.age > (SELECT avg(m2.age) FROM Member m2)
 ```
 2. 한 건이라도 주문한 고객
-```
+```java
 SELECT m FROM Member m
 WHERE (SELECT count(o) FROM Order o WHERE m = o.member) > 0
 ```
 
 **서브 쿼리 지원 함수**
 1. [NOT] EXISTS (subquery): 서브 쿼리에 결과가 존재하면 참
-```sql
-<!-- 팀 A 소속인 회원 존재 여부 -->
+```java
+// 팀 A 소속인 회원 존재 여부
 select m from Member m
-where exists (select t from m.team t where t.name = 'A')
+where EXISTS (select t from m.team t where t.name = 'A')
 ```
 2. ALL (subquery): 모두 만족하면 참
-```sql
-<!-- 전체 상품 각각의 재고보다 주문량이 많은 주문들 -->
+```java
+// 전체 상품 각각의 재고보다 주문량이 많은 주문들
 select o from Order o
 where o.orderAmount > ALL (select p.stockAmount from Product p)
 ```
 3. {ANY | SOME} (subquery): 조건을 하나라도 만족하면 참
-```sql
-<!-- 어떤 팀이든 팀에 소속된 회원 -->
+```java
+// 어떤 팀이든 팀에 소속된 회원
 select m from Member m
 where m.team = ANY (select t from Team t)
 ```
 4. [NOT] IN (subquery): 서브쿼리의 결과 중 하나라도 같은 것이 있으면 참
 
+## 6. JPQL 타입 표현과 기타식
+**JPQL 타입 표현**
+* 문자(''안에 넣어주기): 'hello','She''s'
+* 숫자: 10L(Long), 10D(Double), 10F(Float)
+* Boolean: TRUE, FALSE
+* ENUM: jpabook.MemberType.Admin (패키지명 명시)
+  * 파라미터 바인딩을 사용하면 편리 
+* 엔티티 타입: TYPE(m) = Member (상속 관계에서 사용)
+  * `SELECT i FROM Item i WHERE type(i) = Book`
 
+**JPQL 기타**
+* SQL 문법과 거의 유사
+* EXISTS, IN
+* AND, OR, NOT
+* =, >, >=, <, <=, <>
+* BETWEEN, LIKE, IS NULL
+
+## 7. 조건식 - CASE 식
+1. 기본 CASE 식
+```java
+SELECT
+  CASE WHEN m.age <= 10 then '학생요금'
+       WHEN m.age >= 60 then '경로요금'
+       ELSE '일반요금'
+  END
+FROM Member m
+```
+2. 단순 CASE 식
+```java
+SELECT
+  CASE t.name
+      WHEN '팀A' then '인센티브110%'
+      WHEN '팀B' then '인센티브120%'
+      ELSE '인센티브105%'
+  END
+FROM Team t
+```
+3. COALESCE: 하나씩 조회해서 null이 아니면 첫번째 값 반환, null이면 두번째 값 반환
+```java
+// 사용자 이름이 없으면 이름 없는 회원을 반환
+SELECT COALESCE(m.name, '이름 없는 회원') FROM Member m
+```
+5. NULLIF: 두 값이 같으면 null 반환, 다르면 첫번째 값 반환
+```java
+// 사용자 이름이 ‘관리자’면 null을 반환하고 나머지는 본인의 이름을 반환
+SELECT NULLIF(m.name, '관리자') FROM Member m
+```
+
+## 8. JPQL 기본 함수
+* CONCAT: 문자열 더하는 함수
+* SUBSTRING: 문자열 자르는 함수
+* TRIM: 공백 제거
+* LOWER, UPPER
+* LENGTH: 문자열 길이
+* LOCATE: 문자열에서 해당 문자의 위치 반환
+* ABS, SQRT, MOD
+* SIZE, INDEX(JPA 용도)
+* `사용자 정의 함수`: 사용하는 DB의 Dialect를 상속받고 생성자에 registerFunction() 을 구현해 정의
 
 
