@@ -2,7 +2,7 @@
 * JPQL에서 `성능 최적화`를 위해 제공하는 기능
 * Fetch Join을 통해 연관된 엔티티나 컬렉션을 한 번에 함께 조회 (즉시 로딩)
 * @ManyToOne 연관관계를 갖는 엔티티에서 사용
-* Fetch Join은 객체 그래프를 SQL 한번에 조회하는 개념
+* Fetch Join은 연관된 엔티티들을 SQL 한번으로 조회하는 개념
 
 ```java
 SELECT m FROM Member m JOIN FETCH m.team
@@ -150,7 +150,6 @@ WHERE t.name='팀A'
 * Join에 의해 각 Team에 해당하는 Member 수 만큼 row가 늘어난다.
 * 따라서 팀A에 해당하는 Member가 2개이므로, Join시 팀A에 대한 row가 2개가 되어 팀A가 2번 출력된다.
 ```java
-// (회원1 - 팀A), (회원2 - 팀A), (회원3 - 팀B)
 String query = "select t From Team t join fetch t.members";
 List<Team> result2 = em.createQuery(query, Team.class).getResultList();
 
@@ -163,6 +162,9 @@ team = 팀A | members = 2
 team = 팀A | members = 2
 team = 팀B | members = 1
 ```
+
+<img src="https://user-images.githubusercontent.com/50009240/215422743-56e3708e-b264-4c62-97cd-052e767f17d2.png" width="600" height="250">
+
 
 > `참고` 일대다 JOIN은 데이터가 뻥튀기 된다. 다대일에선 JOIN해도 데이터 뻥튀기 X
 
@@ -249,15 +251,144 @@ Hibernate:
 </div>
 </details>
 
+## 5. Fetch Join 한계
+1. Fetch 조인 대상에는 별칭을 줄 수 없다.
+2. 둘 이상의 Collection을 Fetch Join 할 수 없다.
+    * `org.hibernate.loader.MultipleBagFetchException` 발생
+    * 일대다 관계에서는 컬렉션의 카테시안 곱이 만들어지므로, 너무 많은 row가 생성되어 에러 발생
+    * `ToMany` 관계에서는 컬렉션 하나만 Fetch Join 가능
+    * `ToOne` 관계에서는 컬렉션 여러개 Fetch Join 가능
+3. 컬렉션을 페치 조인하면 페이징 API를 사용할 수 없다.
+    * `ToOne` 관계에서는 Fetch Join해도 페이징 가능 (Join해도 row 수가 늘어나지 않으므로)
+    * `ToMany` 관계에서는 Join 대상에 따라 Row 수가 늘어나므로, 페이징이 중간에 짤릴 수 있다.
+      * Hibernate는 경로 로그를 남기고 메모리에서 페이징 (매우 위험)
+      * SQL의 limit문을 사용해 페이징하는 것이 아닌, 테이블을 FULL SCAN해 애플리케이션 메모리에 올려 페이징
+
+## 6. 일대다 FetchJoin 페이징
+**1. 쿼리의 방향을 `@OneToMany`가 아닌, `@ManyToOne` 방향으로 바꾸자.**
+```java
+// Before
+SELECT t FROM Team t JOIN FETCH t.members
+
+// After
+SELECT m FROM Member m JOIN FETCH t.team
+```
+**2. @BatchSize 사용**
+* `BatchSize`는 여러 개의 프록시 객체를 조회할 때 WHERE 조건절을 하나의 `IN` 절로 바꾸어 쿼리 실행
+* size 속성은 IN 절에 들어갈 요소의 최대 개수
+* 만약 조회할 프록시 객체가 설정한 배치사이즈 크기보다 더 많다면 `IN` 쿼리가 추가로 날아간다.
+  * size는 100으로 설정, 조회할 프록시 객체가 150개라면 처음에 100개, 다음에 50개로 나눠 IN 쿼리를 날린다.
+* BatchSize 사용하면 쿼리 수를 N+1이 아니라 `Row수/size`로 맞출 수 있다.
+<br></br>
+* Team을 가져올 때 Member는 Lazy 로딩 상태이다. (프록시 객체)
+* Team 객체가 getMembers()를 호출할 때 result에 담긴 각 Team의 member를 한 번에 IN 쿼리로 size만큼 가져온다. 
+```java
+@Entity
+public class Team {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    private String name;
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "team")
+    private List<Member> members = new ArrayList<>();
+}
+```
+```java
+String query = "select t From Team t";
+List<Team> result = em.createQuery(query, Team.class)
+          .setFirstResult(0)
+          .setMaxResults(2)
+          .getResultList();
+
+for (Team team : result) {
+    System.out.println("team = " + team.getName() +" | members = " + team.getMembers().size());
+}
+```
+<details>
+<summary>실행 결과 비교</summary>
+<div>
+
+```sql
+-- BatchSize 사용 전
+Hibernate: 
+    /* select
+        t 
+    From
+        Team t */ select
+            team0_.id as id1_3_,
+            team0_.name as name2_3_ 
+        from
+            Team team0_ limit ?
+---
+Hibernate: 
+    select
+        members0_.team_id as team_id4_0_0_,
+        members0_.id as id1_0_0_,
+        members0_.id as id1_0_1_,
+        members0_.age as age2_0_1_,
+        members0_.name as name3_0_1_,
+        members0_.team_id as team_id4_0_1_ 
+    from
+        Member members0_ 
+    where
+        members0_.team_id=?
+team = 팀A | members = 2
+
+Hibernate: 
+    select
+        members0_.team_id as team_id4_0_0_,
+        members0_.id as id1_0_0_,
+        members0_.id as id1_0_1_,
+        members0_.age as age2_0_1_,
+        members0_.name as name3_0_1_,
+        members0_.team_id as team_id4_0_1_ 
+    from
+        Member members0_ 
+    where
+        members0_.team_id=?
+team = 팀B | members = 1
+-- ...
+```
+```sql
+-- BatchSize 사용 후
+Hibernate: 
+    /* select
+        t 
+    From
+        Team t */ select
+            team0_.id as id1_3_,
+            team0_.name as name2_3_ 
+        from
+            Team team0_ limit ?
+---        
+Hibernate: 
+    /* load one-to-many jpql.Team.members */ select
+        members0_.team_id as team_id4_0_1_,
+        members0_.id as id1_0_1_,
+        members0_.id as id1_0_0_,
+        members0_.age as age2_0_0_,
+        members0_.name as name3_0_0_,
+        members0_.team_id as team_id4_0_0_ 
+    from
+        Member members0_ 
+    where
+        members0_.team_id in (
+            ?, ?
+        )
+
+team = 팀A | members = 2
+team = 팀B | members = 1
+```
+* WHERE 조건절을 하나의 IN절로 바꾸어 쿼리를 실행한다.
 
 
+</div>
+</details>
 
-
-
-
-
-
-
+> `TIP` 글로벌 로딩 전략은 모두 지연 로딩, 최적화가 필요한 곳은 Fetch Join을 적용해라
 
 
 
