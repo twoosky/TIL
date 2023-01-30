@@ -248,4 +248,78 @@ SELECT NULLIF(m.name, '관리자') FROM Member m
 * SIZE, INDEX(JPA 용도)
 * `사용자 정의 함수`: 사용하는 DB의 Dialect를 상속받고 생성자에 registerFunction() 을 구현해 정의
 
+## 9. 엔티티 직접 사용
+JPQL에서 엔티티를 직접 사용하면 SQL에서 해당 엔티티의 기본 키 값을 사용한다.
+
+1. 기본 키 값
+```java
+// 1. 엔티티를 파라미터로 전달
+select m from Member m where m = :member
+
+// 2. 식별자를 직접 전달
+select m from Member m where m.id = :memberId
+```
+```sql
+-- 실행된 SQL
+SELECT m.* FROM member m where m.id=?
+```
+
+2. 외래 키 값
+```java
+1. 엔티티를 파라미터로 전달
+select m from Member m where m = :member
+
+// 2. 식별자를 직접 전달
+select m from Member m where m.team.id = :teamId”
+```
+```sql
+-- 실행된 SQL
+SELECT m.* FROM member m WHERE m.team_id=?
+```
+
+## 10. Named 쿼리 - 정적 쿼리
+* 미리 정의해서 이름을 부여해두고 사용하는 JPQL
+* 정적 쿼리, 어노테이션, XML에 정의
+* 애플리케이션 로딩 시점에 초기화 후 재사용
+  * 애플리케이션 로딩 시점에 Named 쿼리를 SQL로 파싱해 캐시
+* 애플리케이션 `로딩 시점에 쿼리를 검증`
+  * Named 쿼리 오류 시 QuerySyntaxException 발생
+
+```java
+@Entity
+@NamedQuery(
+        name = "Member.findByName",
+        query = "select m from Memberqq m where m.name = :name"
+)
+public class Member {
+```
+```java
+List<Member> result = em.createNamedQuery("Member.findByName", Member.class)
+                .setParameter("name", "회원1")
+                .getResultList();
+```
+
+* Spring Data Jpa에서의 Named 쿼리
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    
+    // Named 쿼리
+    @Query("select m from Member m where m.name = :name")
+    Member findByName(String name);
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
