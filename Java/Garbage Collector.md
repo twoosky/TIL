@@ -8,13 +8,22 @@
 * Unreachable: 객체가 참조되고 있지 않은 상태 (GC의 대상이 됨)
 <img src="https://user-images.githubusercontent.com/50009240/218995174-71cfd0bd-41d6-4076-95f5-dd688c92efb2.png" width="540" height="240">
 
-* 객체들은 실질적으로 Heap 영역에서 생성되고, Method 영역, Stack 영역에서는 Heap 영역 객체의 주소만 참조하는 형식으로 구성된다.
+* 객체들은 실질적으로 Heap 영역에서 생성되고, Method 영역, Stack 영역 등에서는 Heap 영역 객체의 주소만 참조한다.
 * 메서드 종료와 같은 특정 이벤트로 인해 Heap 영역 객체의 메모리 주소를 갖는 참조 변수가 삭제되면 
 * 위 그림의 빨간색 객체와 같이 어디서도 참조되고 있지 않은 객체들이 발생하게 된다. 
 * 이러한 객체들을 Unreachable하다고 하며, Garbage Collector의 대상이된다.
 
-## 2. GC 동작 원리: Mark And Sweep 
-1. Mark 과정: Stack, Method 영역의 참조 변수를 스캔해 각각 Heap영역의 어떤 객체를 참조하고 있는지 찾아서 마킹한다.
+## 2. Heap에 있는 객체에 대한 참조 종류
+1. Heap 내의 다른 객체에 의한 참조
+2. Stack 영역의 참조 변수에 의한 참조
+3. Native Stack 영역, 즉 JNI(Java Native Interface)에 의해 생성된 객체에 대한 참조
+4. Method 영역의 static 변수에 의한 참조
+
+* 이들 중 Heap 내의 다른 객체에 의한 참조를 제외한 나머지 3개가 Root Set이다.
+* Root Set을 통해 Reachable 객체를 판단한다.
+
+## 3. GC 동작 원리: Mark And Sweep 
+1. Mark 과정: Root Set부터 참조하는 객체를 스캔해 각각 Heap영역의 해당 객체(Reachable Object)를 마킹한다.
 2. Mark 과정: Reachable Object가 참조하고 있는 객체도 찾아서 마킹한다.
 3. Sweep 과정: 마킹되지 않은 객체 즉, Unreachable 객체들을 Heap에서 제거한다.
 
@@ -50,13 +59,16 @@
 
 
 **6. Old Generation 영역이 꽉차면 Major GC가 실행된다.**
-* Old Generation 영역의 메모리를 회수하는 GC를 Major GC라고 한다.
-* Major GC를 실행하는 스레드를 제외한 모든 스레드는 작업을 멈추게 된다. (Stop-the-World)
-* Major GC 작업이 너무 잦으면 프로그램 성능에 문제가 될 수 있다.
+* Mark And Sweep 방식을 통해 Old Generation 영역의 메모리를 회수하는 것을 Major GC라고 한다.
+* Minor GC보다 Major GC가 stop-the-wrold 현상이 더 길다.
 <img src="https://user-images.githubusercontent.com/50009240/219011554-d7e2b3fb-bde4-43a7-a627-e3f5059dd477.png" width="600" height="200">
 
 
 
 ## 4. Garbage Collector 한계
-1. 메모리가 언제 해제되는지 정확히 알 수 없다.
-2. Major GC 실행 동안 다른 스레드는 작업을 멈추기 때문에 오버헤드가 발생한다.
+1. GC의 메모리 해제 타이밍을 개발자가 정확히 알기 어렵다.
+2. GC가 동작하는 동안 다른 스레드는 작업을 멈추기 때문에 오버헤드가 발생한다. (stop-the-world)
+
+
+
+즉, 어느 순간에는 실행 중인 애플리케이션이 GC에게 컴퓨터 리소스를 내어 주어야 한다
