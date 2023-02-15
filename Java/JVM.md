@@ -29,28 +29,28 @@
 * 모든 스레드가 공유: Method Area, Heap Area
 * 스레드 별로 생성: Stack Area, PC Resisters, Native Method Stack
 
-**1. Method Area**   
+### Method Area
 * 클래스, 인터페이스, 메소드, Static 변수 등의 바이트 코드를 보관하는 영역.
 * 모든 스레드가 공유하는 메모리 영역
 * 프로그램 시작 전에 로드되고 프로그램 종료 시 소멸
 * Runtime Constant Pool은 클래스와 인터페이스 상수, 메서드와 필드에 대한 모든 레퍼런스를 저장한다.
 * JVM은 Runtime Constant Pool을 통해 해당 메소드나 필드의 실제 메모리 상 주소를 찾아 참조한다.
 
-**2. Heap Area**
+### Heap Area
 * new 키워드로 생성된 객체와 배열을 저장하는 영역 (메소드 영역에 로드된 클래스만 생성 가능)
 * Garbage Collector가 참조되지 않는 메모리를 확인하고 제거하는 영역
 * 모든 스레드에서 공유하는 영역
 
-**3. Stack Area**
+### Stack Area
 * 지역변수, 파라미터, 리턴 값 등 임시로 할당되었다가, 메소드 수행이 끝나면 소멸되는 데이터를 저장하는 영역
 * 각 스레드마다 하나씩 존재하며, 스레드가 시작될 때 할당된다.
 * 메소드 호출 시마다 각각의 스택 프레임(그 메서드만을 위한 공간)이 생성된다. 메서드 수행이 끝나면 해당 프레임을 삭제한다.
 
-**4. PC Register**
+### PC Register
 * 현재 스레드가 실행 중인 JVM 명령의 주소(Program Counter)를 갖고 있는 영역
 * 각 스레드마다 하나씩 존재하며, 스레드가 시작될 때 생성된다.
 
-**5. Native Method Stack Area**
+### Native Method Stack Area
 * 자바 외 언어로 작성된 코드를 위한 스택 영역
 
 ## 변수의 종류와 메모리 구조
