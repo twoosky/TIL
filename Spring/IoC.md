@@ -25,7 +25,40 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 		                      MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
 ```
 
+* ApplicationContext의 구현체에는 여러가지가 있다.
+* 구현체에 따라 스프링 컨테이너를 XML로 구성할 수도 있고, Java 클래스로 구성할 수도 있다.
+* 다양한 형태로 스프링 컨테이너 구성이 가능한 이유는 스프링은 다양항 형태의 설정 정보를 `BeanDefinition`으로 추상화해서 사용하기 때문이다.
+
 ## BeanDefinition
+* 빈 설정 메타정보이다. `@Bean` 당 각각 하나씩 메타 정보가 생성된다.
+* 스프링 컨테이너는 이 메타정보를 기반으로 스프링 컨테이너를 생성한다.
+* 스프링은 다양한 형태의 설정 정보를 `BeanDefinition`으로 추상화해서 사용한다.
 
+<img src="https://user-images.githubusercontent.com/50009240/232467320-812e183f-6515-4cdf-85c3-94b979b62249.png" width="600" height="350">
 
+* AnnotationConfigApplicationContext는 AnnotatedBeanDefinitionReader를 사용해서 AppConfig.class를 읽고 BeanDefinition을 생성한다.
 
+## Java로 스프링 컨테이너 생성하기
+1. 빈 구성 클래스 작성
+```java
+@Configuration
+public class AppConfig {
+    
+    @Bean
+    public MemberService memberService() {
+        return new MemberServiceImpl(memberRepository());
+    }
+}
+```
+* `@Configuration`: 1개 이상의 비을 제공하는 클래스의 경우 반드시 명시해야 한다.
+* `@Bean`: 클래스를 빈으로 등록할 때 사용한다.
+* @Bean이 붙은 메소드 이름은 빈 이름으로, 메소드 반환값은 빈 객체로 스프링 컨테이너에 등록
+
+2. 스프링 컨테이너 생성
+```java
+ApplicationContext ac = new AnnotaionConfigApplicationContext(AppConfig.class);
+```
+<br></br>
+**Reference**
+* https://steady-coding.tistory.com/600
+* https://velog.io/@max9106/Spring-ApplicationContext
