@@ -340,3 +340,121 @@ public class AspectV6Advice {
   * 메서드이름: *
   * 파라미터: (..)
   * 예외: 생략
+* execution 타입 매칭 예시
+```java
+// 타입 정보가 정확하게 일치
+@Test
+void typeExactMatch() {
+   pointcut.setExpression("execution(* hello.aop.member.MemberServiceImpl.*(..))"); 
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue(); }
+
+// 부모 타입을 선언해도 그 자식 타입은 매칭
+@Test
+void typeMatchSuperType() {
+   pointcut.setExpression("execution(* hello.aop.member.MemberService.*(..))");
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue();
+}
+```
+* execution 파라미터 매칭 예시
+```java
+// String 타입의 파라미터 허용 
+// (String)
+@Test
+void argsMatch() { 
+   pointcut.setExpression("execution(* *(String))"); 
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue(); 
+}
+
+// 파라미터가 없어야 함
+// ()
+@Test
+void argsMatchNoArgs() {
+   pointcut.setExpression("execution(* *())");
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isFalse();
+}
+
+// 정확히 하나의 파라미터 허용, 모든 타입 허용 
+// (Xxx)
+@Test
+void argsMatchStar() {
+   pointcut.setExpression("execution(* *(*))");
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue();
+}
+
+// 숫자와 무관하게 모든 파라미터, 모든 타입 허용 
+// 파라미터가 없어도 됨
+// (), (Xxx), (Xxx, Xxx)
+@Test
+void argsMatchAll() { 
+   pointcut.setExpression("execution(* *(..))"); 
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue(); 
+}
+
+// String 타입으로 시작, 숫자와 무관하게 모든 파라미터, 모든 타입 허용 
+// (String), (String, Xxx), (String, Xxx, Xxx) 허용
+@Test
+void argsMatchComplex() {
+   pointcut.setExpression("execution(* *(String, ..))");
+   assertThat(pointcut.matches(helloMethod, MemberServiceImpl.class)).isTrue();
+}
+```
+* execution 예시
+```java
+@Aspect
+@Component
+public class MeasureExecutionTimeAspect {
+	
+	// repository에 있는 모든 클래스의 메서드
+	@Around("execution(* *..repository.*.*(..))")
+	public Object aroundAdvice( ProceedingJoinPoint pjp) throws Throwable {
+		// before advice
+		StopWatch sw = new StopWatch();
+		sw.start();
+		
+		Object result = pjp.proceed();
+		
+		// after advice
+		sw.stop();
+		Long total = sw.getTotalTimeMillis();
+		
+		// 어떤 클래스의 메서드인지 출력하는 정보는 pjp 객체에 있다.
+		String className = pjp.getTarget().getClass().getName();
+		String methodName = pjp.getSignature().getName();
+		String taskName = className + "." + methodName;
+		
+		System.out.println("[ExecutionTime] " + taskName + " , " + total + "(ms)");
+		
+		return result;
+	}
+}
+```
+**@annotation**
+* @annotation 문법: @annotation(선언타입/메서드이름)
+* @annotation 문법 예시: @Around("@annotation(hello.aop.member.annotation.MethodAop)")
+* 어노테이션의 파라미터에 값을 넣어 AOP에 전달도 가능
+* @annotation 예시
+```
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TargetAnno {
+   String name() default "";
+   String code() default "a1000";
+}
+```
+```java
+@Aspect
+@Component
+public class MainAOP { 
+   @Around("@annotation(org.defaultpj.sample.annotation.TargetAnno) && @ annotation(target)")
+   public Object customAnnoTest(ProceedingJoinPoint joinPoint, TargetAnno target) throws Throwable {
+      System.out.println("name : " + target.name());
+      System.out.println("code : " + target.code()  );
+      Object returnPoint = joinPoint.proceed();
+      return returnPoint;
+   }
+}
+@TargetAnno(name = "심해펭귄", code = "A-1001")
+@RequestMapping(value = "/", method = RequestMethod.GET)
+public String index(Model model) {
+   return "test";
+}
+```
