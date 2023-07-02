@@ -458,3 +458,136 @@ public String index(Model model) {
    return "test";
 }
 ```
+
+## 스프링 AOP 실무 주의사항
+**내부 호출 문제**
+* AOP를 적용하려면 항상 프록시를 통해서 대상 객체(Target)을 호출해야하며 프록시를 스프링 빈으로 등록하여 프록시 객체가 주입되기 때문에 대상 객체를 직접 호출하는 문제는 일반적으로 발생하지 않는데, 대상 객체의 내부에서 메서드 호출이 발생하면 프록시를 거치지 않고 대상 객체를 직접 호출하기에 프록시 방식의 AOP는 메서드 내부 호출에 프록시를 적용할 수 없음
+* AspectJ를 사용하면 이런 문제가 발생하지 않으나 실무에서는 거의 사용하지 않음
+* 내부 호출 문제 예시 코드
+```
+@Slf4j
+@Component
+public class CallServiceV0 {
+   public void external() {
+      log.info("call external");
+      internal(); //내부 메서드 호출(this.internal())
+   }
+
+   public void internal() { 
+      log.info("call internal");
+   } 
+}
+```
+```java
+@Slf4j
+@Aspect
+public class CallLogAspect {
+   
+   @Before("execution(* hello.aop.internalcall..*.*(..))") 
+   public void doLog(JoinPoint joinPoint) {
+      log.info("aop={}", joinPoint.getSignature()); 
+   }
+}
+```
+```java
+@Import(CallLogAspect.class) 
+@SpringBootTest
+class CallServiceV0Test {
+
+   @Autowired
+   CallServiceV0 callServiceV0;
+   
+   @Test
+   void external() {
+      callServiceV0.external(); 
+   }
+   
+   @Test
+   void internal() {
+      callServiceV0.internal(); 
+   }
+}
+```
+* 내부 호출 문제 대안 1
+```java
+/**
+* 자기 자신 주입
+*/
+@Slf4j
+@Component
+public class CallServiceV1 {
+   
+   private CallServiceV1 callServiceV1;
+   
+   @Autowired
+   public void setCallServiceV1(CallServiceV1 callServiceV1) { // 생성자 주입은 순환 사이클을 만들기 때문에 실패하여 setter 주입
+      this.callServiceV1 = callServiceV1; 
+   }
+   
+   public void external() {
+      log.info("call external"); 
+      callServiceV1.internal(); //외부 메서드 호출
+   }
+   
+   public void internal() { 
+      log.info("call internal");
+   } 
+}
+```
+* 내부 호출 문제 대안 2
+```java
+/**
+* ObjectProvider(Provider)나 ApplicationContext를 사용해서 지연(LAZY) 조회
+*/
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class CallServiceV2 {
+  
+  //  private final ApplicationContext applicationContext;
+   private final ObjectProvider<CallServiceV2> callServiceProvider;
+   
+   public void external() { 
+      log.info("call external");
+      
+      // CallServiceV2 callServiceV2 = applicationContext.getBean(CallServiceV2.class);
+      CallServiceV2 callServiceV2 = callServiceProvider.getObject(); 
+      callServiceV2.internal(); //외부 메서드 호출
+   }
+   
+   public void internal() { 
+      log.info("call internal");
+   } 
+}
+```
+* 내부 호출 문제 대안 3
+```java
+/**
+* 구조를 변경(분리)
+*/
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class CallServiceV3 {
+   
+   private final InternalService internalService;
+   
+   public void external() {
+      log.info("call external"); 
+      internalService.internal(); //외부 메서드 호출
+   } 
+}
+
+```java
+@Slf4j
+@Component
+public class InternalService {
+
+    public void internal() {
+        log.info("call internal"); 
+   }
+}
+```
+* 프록시 기술과 한계
+* JDK 동적 프록시 인터페이스 기반으로 프록시를 생성하기 때문에 구체 클래스로 타입 캐스팅이 불가능
+* CGLIB 은 구체 클래스 기반으로 하기 때문에 final 키워드 클래스, 메서드 사용이 불가능
