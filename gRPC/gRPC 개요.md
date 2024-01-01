@@ -32,20 +32,25 @@ message HelloReply {
 * Protocol Buffer를 언어에서 독립적으로 활용하기 위해서는 이를 기반으로 Client와 Server에서 사용할 수 있는 Stub 클래스를 생성해야 한다.
 
 ## Stub
-* protocol buffer compiler인 protoc를 사용하여 proto 정의에서 원하는 언어로 데이터 엑세스 클래스를 생성한다. 이를 Stub 클래스라고 한다.
+* protocol buffer compiler인 protoc를 사용하여 proto 정의를 원하는 언어로 데이터 엑세스 클래스를 생성한다. 이를 Stub 클래스라고 한다.
 * Stub은 message의 각 필드에 대한 get/set 메소드와 전체 데이터를 raw bytes로 직렬화/역직렬화하기 위한 메소드를 제공한다.
 
 **Stub을 사용해 Client에서 특정 RPC 호출 예제**
 * 클라이언트에서 Stub 클래스를 사용하여 서버와 통신하는 코드 예제이다.
 * Stub 클래스를 통해 Person Protocol Buffer message 필드값을 채우고, 직렬화/역직렬화한다.
 ```kotlin
-class HelloWorldClient {
-  private val channel: String = "hello_world"  // 해당 proto 파일명
+class HelloWorldClient(
+    private val channel: ManagedChannel
+) : Closeable {
   private val stub: GreeterCoroutineStub = GreeterCoroutineStub(channel)
 
-  fun greet(name: String) {
-    val request = helloRequest { this.name = name }
+  suspend fun greet(name: String) {
+    val request = helloRequest { this.name = name }  // message 필드값 주입
     val response = stub.sayHello(request)  // RPC 호출
+  }
+
+  override fun close() {
+    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
   }
 }
 ```
