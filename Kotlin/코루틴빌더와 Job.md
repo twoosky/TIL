@@ -1,4 +1,4 @@
-## 코루틴빌더와 Job
+# 코루틴빌더와 Job
 * 코루틴빌더: 코루틴을 만들어주는 함수 (runBlocking, launch ..)
 
 ## 1. runBlocking
@@ -97,8 +97,9 @@ fun main(): Unit = runBlocking {
 * 주어진 **함수의 실행 결과를 반환할 수 있다.**
 * 대신 함수의 결과를 바로 반환하지 않고, `Deferred` 객체를 반환한다.
 * Deferred는 Job을 상속받는 객체로 코루틴을 제어하는 기능이 존재하고, 실행된 결과를 가져오는 `await()` 함수가 추가적으로 존재한다.
+* async()는 외부 자원을 동시에 호출하는 상황에서 유리하게 사용할 수 있다. (동시에 실행 가능하므로)
 
-**await() 예시**
+**3-1. await() 예시**
 ```kotlin
 fun main(): Unit = runBlocking {
     val job = async {
@@ -113,7 +114,7 @@ fun main(): Unit = runBlocking {
 [main] 8
 ```
 
-**await() 예시2**
+**3-2. await() 예시**
 ```kotlin
 fun main(): Unit = runBlocking {
     val time = measureTimeMillis {
@@ -135,3 +136,45 @@ suspend fun apiCall2(): Int {
     return 3
 }
 ```
+```
+[main] 8
+[main] 소요 시간 : 1025 ms
+```
+* async() 함수를 활용해 두 API를 동시에 호출해 대기를 동시에 함으로써 소요시간을 최소화할 수 있다.
+
+> 동시에 대기하는 것이 어떻게 가능한가?
+> * 코루틴1이 중단되면, 코루틴2가 실행되기 때문에 아래와 같이 동시에 대기할 수 있게 된다.
+> * 이를 통해 여러 Job의 소요시간을 최소화할 수 있다.
+> <img width="490" alt="image" src="https://github.com/twoosky/TIL/assets/50009240/187e5720-2779-4310-80a0-863d3f20ee0a">
+
+**3-3. await() 예시: 첫번째 API의 결과가 두번째 API 실행에 필요한 경우**
+```kotlin
+fun main(): Unit = runBlocking {
+    val time = measureTimeMillis {
+        val job1 = async { apiCall1() }
+        val job2 = async { apiCall2(job1.await()) }
+        printWithThread(job2.await())
+    }
+
+    printWithThread("소요 시간 : $time ms")
+}
+
+suspend fun apiCall1(): Int {
+    delay(1_000L)
+    return 5
+}
+
+suspend fun apiCall2(num: Int): Int {
+    delay(1_000L)
+    return 3 + num
+}
+```
+```
+[main] 8
+[main] 소요 시간 : 2028 ms
+```
+* job1의 결과를 await을 통해 가져와 job2에 넘겨주면된다. 위와 같이 동기식 코드로 작성할 수 있다.
+* 동기 방식으로, job1의 작업이 끝나면, job2가 실행되므로 소요 시간은 2초가 걸린다.
+
+**async 주의사항**
+* CoroutineStart.LAZY 옵션을 사용하면, await() 함수를 호출했을 때 계산 결과를 계속 기다린다.
