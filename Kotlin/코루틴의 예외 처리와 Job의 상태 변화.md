@@ -143,3 +143,16 @@ fun main(): Unit = runBlocking {
 [DefaultDispatcher-worker-1] 예외
 ```
 > try catch는 코루틴 자체에서 예외를 잡아 처리하는 것이고, coroutineExceptionHandler는 예외는 이미 발생한 상황에서 해당 예외를 처리하는 것이다.
+
+## Job의 상태 변화
+코루틴 내부에서 발생한 예외는 아래와 같이 처리한다.
+
+**1. 발생한 예외가 `CancellationException`인 경우: 취소로 간주하고, 부모에게 전파하지 않는다.**
+<img width="532" alt="Screen Shot 2024-03-05 at 11 59 48 PM" src="https://github.com/twoosky/TIL/assets/50009240/1c6f9582-8e4c-4555-b2c5-37834559541f">
+
+**2. 다른 예외가 발생한 경우: 실패로 간주하고, 부모 코루틴에게 전파한다.**
+* 코루틴은 CancellationException 포함 모든 예외에 대해 *취소됨 상태*로 간주한다.
+* COMPLETING 상태가 존재하는 이유는 자식 코루틴 중 하나에서 예외가 발생하면 다른 자식 코루틴들에게도 취소 요청을 보내기 때문이다.
+  * 즉, 모든 자식 코루틴이 정상적으로 작업을 끝내야 COMPLETED 상태가 된다.
+<img width="683" alt="Screen Shot 2024-03-06 at 12 03 15 AM" src="https://github.com/twoosky/TIL/assets/50009240/9e9b7898-68ee-4a80-9452-856a1abd8681">
+
